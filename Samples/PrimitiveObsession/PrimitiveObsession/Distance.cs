@@ -33,7 +33,7 @@ namespace PrimitiveObsession
 
         public bool Equals(Distance other)
         {
-            return _metres == other._metres;  // could allow for floating point rounding error here
+            return _metres == other._metres;
         }
 
         public override bool Equals(object obj)
@@ -98,7 +98,7 @@ namespace PrimitiveObsession
 
         public static bool operator <=(Distance first, Distance second)
         {
-            return first.CompareTo(second) <= 0;  // NOTE: assumes we are NOT debouncing floating point rounding in Equals()
+            return first.CompareTo(second) <= 0;
         }
 
         public static bool operator >(Distance first, Distance second)
