@@ -118,6 +118,8 @@ namespace Roslyniser
 
                 if (wrapAttribute != null)
                 {
+                    bool comparable = wrapAttribute.ArgumentList.Arguments.Any(a => a.NameEquals != null && a.NameEquals.Name.Identifier.Text == "Comparable" && a.Expression.ToString() == "true");
+
                     var fields = node.DescendantNodes().OfType<FieldDeclarationSyntax>().ToList();
 
                     if (fields.Count != 1)
@@ -144,9 +146,7 @@ namespace Roslyniser
 
                     str = str.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName($"System.IEquatable<{str.Identifier.Text}>")));
 
-                    var text = String.Format(@"
-struct {0}
-{{
+                    var contentFormat = @"
 public {0}({2} raw)
 {{
     {1} = raw;
@@ -170,7 +170,56 @@ public override int GetHashCode()
 {{
     return {1}.GetHashCode();  // TODO: handle where primitive is nullable
 }}
-}}", str.Identifier.Text, fieldId.Text, field.Type);
+
+public static bool operator ==({0} first, {0} second)
+{{
+    return first.Equals(second);
+}}
+
+public static bool operator !=({0} first, {0} second)
+{{
+    return !(first == second);
+}}
+";
+
+                    if (comparable)
+                    {
+                        str = str.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName($"System.IComparable<{str.Identifier.Text}>")));
+
+                        contentFormat += @"
+public int CompareTo({0} other)
+{{
+    return {1}.CompareTo(other.{1});
+}}
+
+public static bool operator <({0} first, {0} second)
+{{
+    return first.CompareTo(second) < 0;
+}}
+
+public static bool operator <=({0} first, {0} second)
+{{
+    return first.CompareTo(second) <= 0;
+}}
+
+public static bool operator >({0} first, {0} second)
+{{
+    return first.CompareTo(second) > 0;
+}}
+
+public static bool operator >=({0} first, {0} second)
+{{
+    return first.CompareTo(second) >= 0;
+}}
+";
+                    }
+
+                    var dummyStruct = @"
+struct {0}
+{{" + contentFormat + @"
+}}";
+                    
+                    var text = String.Format(dummyStruct, str.Identifier.Text, fieldId.Text, field.Type);
 
                     var members = SyntaxFactory.ParseSyntaxTree(text)
                                             .GetRoot()
