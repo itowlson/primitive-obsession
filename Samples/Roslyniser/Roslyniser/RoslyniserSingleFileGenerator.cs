@@ -118,7 +118,7 @@ namespace Roslyniser
 
                 if (wrapAttribute != null)
                 {
-                    bool comparable = wrapAttribute.ArgumentList.Arguments.Any(a => a.NameEquals != null && a.NameEquals.Name.Identifier.Text == "Comparable" && a.Expression.ToString() == "true");
+                    bool comparable = wrapAttribute.ArgumentList?.Arguments.Any(a => a.NameEquals != null && a.NameEquals.Name.Identifier.Text == "Comparable" && a.Expression.ToString() == "true") ?? false;
 
                     var fields = node.DescendantNodes().OfType<FieldDeclarationSyntax>().ToList();
 
